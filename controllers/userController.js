@@ -99,7 +99,62 @@ const completePricing = async (req, res) => {
   }
 };
 
+const Razorpay = require('razorpay');
+const { sendAccountDeletionEmail } = require('../services/emailService');
+
+// @desc    Delete user account
+// @route   DELETE /api/users/
+// @access  Private
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Cancel Razorpay Subscription if active
+    if (user.subscription && user.subscription.razorpaySubscriptionId && user.subscription.status === 'active') {
+      try {
+        if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+          const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+          });
+          await razorpay.subscriptions.cancel(user.subscription.razorpaySubscriptionId);
+          console.log(`[Account Deletion] Cancelled Razorpay subscription ${user.subscription.razorpaySubscriptionId} for user ${userId}`);
+        }
+      } catch (rzpErr) {
+        console.error('[Account Deletion] Failed to cancel Razorpay subscription:', rzpErr);
+        // Continue with deletion even if Razorpay API fails (could already be cancelled)
+      }
+    }
+
+    // Send deletion email BEFORE deleting the user record, because we need their email
+    await sendAccountDeletionEmail(user).catch(err => console.error('[Account Deletion] Email Error:', err));
+
+    // Delete user preferences and user
+    if (user.preferences) {
+      await Preference.findByIdAndDelete(user.preferences);
+    }
+    
+    // We should also delete EmailLogs related to this user to avoid orphaned documents
+    const EmailLog = require('../models/EmailLog');
+    await EmailLog.deleteMany({ userId });
+
+    await User.findByIdAndDelete(userId);
+
+    console.log(`[Account Deletion] User ${userId} successfully deleted.`);
+    res.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete Account Error:', error.message);
+    res.status(500).json({ success: false, message: 'Server error during account deletion' });
+  }
+};
+
 module.exports = {
   savePreferences,
-  completePricing
+  completePricing,
+  deleteAccount
 };

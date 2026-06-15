@@ -71,6 +71,9 @@ jobSchema.index({ created_at: -1 });
 jobSchema.index({ location: 1 });
 jobSchema.index({ source: 1 });
 jobSchema.index({ job_type: 1 });
+jobSchema.index({ title: 1 });
+jobSchema.index({ company: 1 });
+jobSchema.index({ skills_required: 1 });
 
 const Job = mongoose.model('Job', jobSchema, 'jobs');
 

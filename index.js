@@ -41,6 +41,8 @@ app.use(express.json());
 
 app.use('/uploads', require('express').static(require('path').join(__dirname, 'uploads')));
 
+const webhookRoutes = require('./routes/webhookRoutes');
+
 // Routes
 app.use('/api', jobRoutes);
 app.use('/api/auth', authRoutes);
@@ -48,16 +50,21 @@ app.use('/api/users', userRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 
 // Connect to DB and Start Server
-connectDB().then(async () => {
-  const server = app.listen(PORT, async () => {
+connectDB().then(() => {
+  const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     
     const Job = require('./models/Job');
     const mongoose = require('mongoose');
     console.log(`Connected DB (index.js): ${mongoose.connection.name}`);
+
+    // Initialize Email Schedulers
+    const { runEmailScheduler } = require('./scheduler/emailCron');
+    runEmailScheduler();
     
     if (process.env.LINKEDIN_TASK_ID) {
       console.log('[Apify] LinkedIn Task Loaded');
@@ -67,9 +74,19 @@ connectDB().then(async () => {
     }
     console.log('[Jobs] Collection ready');
     
-    console.log('[Jobs] Initial Sync Started');
-    await fetchJobs();
-    console.log('[Jobs] Initial Sync Complete');
+    const { initializeJobsCache } = require('./controllers/jobsController');
+    
+    // Non-blocking background sync
+    setImmediate(async () => {
+      try {
+        await initializeJobsCache();
+        console.log('[Jobs] Initial Sync Started');
+        await fetchJobs();
+        console.log('[Jobs] Initial Sync Complete');
+      } catch (err) {
+        console.error('Initial sync failed', err);
+      }
+    });
     
     const cron = require('node-cron');
     const intervalHours = parseInt(process.env.JOB_FETCH_INTERVAL_HOURS) || 6;

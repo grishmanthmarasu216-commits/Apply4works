@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { sendWelcomeEmail, sendVerificationCodeEmail } = require('../services/emailService');
 
 // Helper to generate JWT
 const generateToken = (id) => {
@@ -16,8 +17,15 @@ const registerUser = async (req, res) => {
   try {
     const { name, firstName, lastName, email, password } = req.body;
 
-    if ((!name && (!firstName || !lastName)) || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Please add all fields' });
+    console.log("Request Body:", req.body);
+
+    const missingFields = [];
+    if (!name && !firstName && !lastName) missingFields.push('firstName or lastName');
+    if (!email) missingFields.push('email');
+    if (!password) missingFields.push('password');
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({ success: false, message: `Missing required field(s): ${missingFields.join(', ')}` });
     }
 
     // Check if user exists
@@ -40,6 +48,9 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+      // Send Welcome Email asynchronously
+      sendWelcomeEmail(user).catch(err => console.error('[Auth] Welcome email error:', err));
+
       res.status(201).json({
         success: true,
         token: generateToken(user._id),
@@ -121,37 +132,7 @@ const logoutUser = (req, res) => {
 };
 
 const { OAuth2Client } = require('google-auth-library');
-const nodemailer = require('nodemailer');
-
-const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID');
-
-// In-memory OTP store for simplicity (email -> { otp, expiresAt, userData })
-const otpStore = new Map();
-
-// Helper to send email
-const sendOTPEmail = async (email, otp) => {
-  // If SMTP is not configured, just log it
-  if (!process.env.SMTP_HOST) {
-    console.log(`[MOCK EMAIL] To: ${email} | OTP: ${otp}`);
-    return;
-  }
-  
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-
-  await transporter.sendMail({
-    from: process.env.SMTP_USER || '"Apply4Works" <noreply@apply4works.com>',
-    to: email,
-    subject: 'Your Apply4Works Verification Code',
-    text: `Your verification code is: ${otp}. It will expire in 10 minutes.`,
-  });
-};
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID);
 
 // @desc    Google Sign In
 // @route   POST /api/auth/google
@@ -161,7 +142,7 @@ const googleLogin = async (req, res) => {
     const { token } = req.body;
     const ticket = await client.verifyIdToken({
       idToken: token,
-      audience: process.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID',
+      audience: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
     const { email, given_name, family_name, name, email_verified } = payload;
@@ -173,13 +154,25 @@ const googleLogin = async (req, res) => {
       if (!email_verified) {
         // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStore.set(email, {
-          otp,
-          expiresAt: Date.now() + 10 * 60 * 1000,
-          userData: { email, given_name, family_name, name }
+        
+        // Create user but mark as unverified
+        user = await User.create({
+          name: name || `${given_name} ${family_name}`,
+          firstName: given_name,
+          lastName: family_name,
+          email,
+          password: await bcrypt.hash(Math.random().toString(36).slice(-8), 10), // Random password
+          provider: 'google',
+          googleId: payload.sub,
+          avatar: payload.picture,
+          verification: {
+            code: await bcrypt.hash(otp, 10),
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+            verified: false
+          }
         });
         
-        await sendOTPEmail(email, otp);
+        await sendVerificationCodeEmail(user, otp);
         return res.status(403).json({ requireOTP: true, email, message: 'Email verification required.' });
       }
 
@@ -190,7 +183,44 @@ const googleLogin = async (req, res) => {
         lastName: family_name,
         email,
         password: await bcrypt.hash(Math.random().toString(36).slice(-8), 10), // Random password
+        provider: 'google',
+        googleId: payload.sub,
+        avatar: payload.picture,
+        verification: { verified: true }
       });
+
+      sendWelcomeEmail(user).catch(err => console.error('[Auth] Welcome email error:', err));
+    } else {
+      // Merge account if logging in with Google but existing email
+      let updated = false;
+      if (user.provider !== 'google' || !user.googleId) {
+        user.provider = 'google';
+        user.googleId = payload.sub;
+        updated = true;
+      }
+      if (!user.avatar && payload.picture) {
+        user.avatar = payload.picture;
+        updated = true;
+      }
+      if (!user.verification || !user.verification.verified) {
+        if (!email_verified) {
+           const otp = Math.floor(100000 + Math.random() * 900000).toString();
+           user.verification = {
+             code: await bcrypt.hash(otp, 10),
+             expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+             verified: false
+           };
+           await user.save();
+           await sendVerificationCodeEmail(user, otp);
+           return res.status(403).json({ requireOTP: true, email, message: 'Email verification required.' });
+        } else {
+           user.verification = { verified: true };
+           updated = true;
+        }
+      }
+      if (updated) {
+        await user.save();
+      }
     }
 
     res.json({
@@ -222,36 +252,29 @@ const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
     
-    const record = otpStore.get(email);
-    if (!record) {
+    let user = await User.findOne({ email }).populate('preferences');
+    if (!user || !user.verification || !user.verification.code) {
       return res.status(400).json({ success: false, message: 'OTP expired or not found.' });
     }
     
-    if (Date.now() > record.expiresAt) {
-      otpStore.delete(email);
+    if (new Date() > user.verification.expiresAt) {
+      user.verification.code = null;
+      await user.save();
       return res.status(400).json({ success: false, message: 'OTP has expired.' });
     }
     
-    if (record.otp !== otp) {
+    const isValid = await bcrypt.compare(otp, user.verification.code);
+    if (!isValid) {
       return res.status(400).json({ success: false, message: 'Invalid OTP.' });
     }
     
-    // OTP matches, clear it
-    otpStore.delete(email);
-    
-    const { given_name, family_name, name } = record.userData;
-    
-    let user = await User.findOne({ email }).populate('preferences');
-    if (!user) {
-      user = await User.create({
-        name: name || `${given_name} ${family_name}`,
-        firstName: given_name,
-        lastName: family_name,
-        email,
-        password: await bcrypt.hash(Math.random().toString(36).slice(-8), 10),
-      });
-    }
+    // OTP matches, mark verified
+    user.verification.verified = true;
+    user.verification.code = null;
+    await user.save();
 
+    sendWelcomeEmail(user).catch(err => console.error('[Auth] Welcome email error:', err));
+    
     res.json({
       success: true,
       token: generateToken(user._id),

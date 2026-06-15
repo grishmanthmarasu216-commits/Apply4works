@@ -1,4 +1,8 @@
 const Razorpay = require('razorpay');
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'dummy_id',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret'
+});
 const crypto = require('crypto');
 const User = require('../models/User');
 const Subscription = require('../models/Subscription');
@@ -29,11 +33,18 @@ exports.validateCoupon = async (req, res) => {
 };
 
 exports.createOrder = async (req, res) => {
+  console.log('[Payment] Request received for createOrder:', req.body);
   try {
+    if (!req.user || !req.user.id) {
+      console.warn('[Payment] Unauthenticated or missing user id.');
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
     const { plan, coupon } = req.body;
     const userId = req.user.id;
 
     if (!plan || !planAmounts[plan]) {
+      console.warn(`[Payment] Invalid plan selected: ${plan}`);
       return res.status(400).json({ success: false, message: 'Invalid plan selected' });
     }
 
@@ -49,40 +60,58 @@ exports.createOrder = async (req, res) => {
         discountAmount = originalAmount * (discountPercentage / 100);
         finalAmount = Math.round(originalAmount - discountAmount);
       } else {
+        console.warn(`[Payment] Invalid coupon provided: ${upperCoupon}`);
         return res.status(400).json({ success: false, message: 'Invalid Coupon Code' });
       }
     }
 
     if (finalAmount === 0) {
+      console.log(`[Payment] Activating 100% free plan for user ${userId}`);
       const now = new Date();
       const subEnd = new Date(now.getTime());
       subEnd.setMonth(subEnd.getMonth() + 1);
 
-      await User.findByIdAndUpdate(userId, {
-        plan,
-        paymentStatus: 'Completed',
-        pricingCompleted: true,
-        subscriptionStart: now,
-        subscriptionEnd: subEnd,
-        appliedCoupon: upperCoupon,
-        originalAmount: originalAmount / 100,
-        discountPercentage,
-        discountAmount: discountAmount / 100,
-        finalAmountPaid: 0,
-        currency: 'USD'
-      });
+      try {
+        await User.findByIdAndUpdate(userId, {
+          plan,
+          paymentStatus: 'Completed',
+          paymentProvider: 'Coupon',
+          pricingCompleted: true,
+          subscriptionStart: now,
+          subscriptionEnd: subEnd,
+          appliedCoupon: upperCoupon,
+          originalAmount: originalAmount / 100,
+          discountPercentage,
+          discountAmount: discountAmount / 100,
+          finalAmountPaid: 0,
+          currency: 'USD'
+        });
 
-      await Subscription.create({
-        userId,
-        activePlan: plan,
-        paymentStatus: 'paid',
-        subscriptionStatus: 'active',
-        purchasedAt: now,
+        await Subscription.create({
+          userId,
+          activePlan: plan,
+          paymentStatus: 'paid',
+          paymentProvider: 'Coupon',
+          subscriptionStatus: 'active',
+          purchasedAt: now,
+          expiryDate: subEnd,
+          currency: 'USD',
+          finalAmountPaid: 0,
+          appliedCoupon: upperCoupon
+        });
+      } catch (dbError) {
+        console.error('[Payment] Database error during free plan activation:', dbError);
+        return res.status(500).json({ success: false, message: 'Database error while saving subscription' });
+      }
+      const { sendPaymentSuccessEmail } = require('../services/emailService');
+      const user = await User.findById(userId);
+      sendPaymentSuccessEmail(user, {
+        planName: plan,
+        amount: 0,
+        startDate: now,
         expiryDate: subEnd,
-        currency: 'USD',
-        finalAmountPaid: 0,
-        appliedCoupon: upperCoupon
-      });
+        transactionId: upperCoupon
+      }).catch(err => console.error('[Payment] Email Error:', err));
 
       return res.json({
         success: true,
@@ -96,109 +125,119 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET
-    });
-
+    // -----------------------------------------
+    // RAZORPAY CHECKOUT
+    // -----------------------------------------
     const options = {
-      amount: finalAmount,
-      currency: 'USD',
-      receipt: `rcpt_${Date.now()}`,
-      payment_capture: 1
+      amount: finalAmount, // Razorpay expects smallest currency unit
+      currency: "USD",
+      receipt: `rcpt_${userId.toString().substring(18, 24)}_${Date.now()}`
     };
-
-    const order = await razorpay.orders.create(options);
-
-    if (!order) {
-      return res.status(500).json({ success: false, message: 'Failed to create Razorpay order' });
+    
+    console.log('[Payment] Initializing Razorpay order with options:', options);
+    let order;
+    try {
+      order = await razorpay.orders.create(options);
+      console.log('[Payment] Razorpay order created successfully:', order.id);
+    } catch (rzpError) {
+      console.error('[Payment] Razorpay API Error:', JSON.stringify(rzpError, null, 2));
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Payment gateway error', 
+        error: rzpError.description || rzpError.message || 'Unknown Razorpay error' 
+      });
     }
 
-    await User.findByIdAndUpdate(userId, {
-      plan,
-      paymentStatus: 'Pending',
-      razorpayOrderId: order.id,
-      appliedCoupon: upperCoupon,
-      originalAmount: originalAmount / 100,
-      discountPercentage,
-      discountAmount: discountAmount / 100,
-      finalAmountPaid: finalAmount / 100,
+    try {
+      await User.findByIdAndUpdate(userId, {
+        plan,
+        paymentStatus: 'Pending',
+        paymentProvider: 'Razorpay',
+        appliedCoupon: upperCoupon,
+        originalAmount: originalAmount / 100,
+        discountPercentage,
+        discountAmount: discountAmount / 100,
+        finalAmountPaid: finalAmount / 100,
+        currency: 'USD'
+      });
+    } catch (dbError) {
+      console.error('[Payment] Database error updating user with pending payment:', dbError);
+      return res.status(500).json({ success: false, message: 'Database error saving order state' });
+    }
+
+    return res.json({
+      success: true,
+      provider: 'razorpay',
+      orderId: order.id,
+      amount: finalAmount,
       currency: 'USD'
     });
-
-    res.json({
-      success: true,
-      orderId: order.id,
-      amount: order.amount,
-      originalAmount: originalAmount / 100,
-      discountAmount: discountAmount / 100,
-      finalAmount: finalAmount / 100,
-      appliedCoupon: upperCoupon,
-      currency: order.currency,
-      key: process.env.RAZORPAY_KEY_ID
-    });
   } catch (error) {
-    console.error('Error in createOrder:', error);
-    res.status(500).json({ success: false, message: 'Server error creating order' });
+    console.error('[Payment] Unhandled Exception in createOrder:', error);
+    res.status(500).json({ success: false, message: 'Server error creating order', error: error.message });
   }
 };
 
 exports.verifyPayment = async (req, res) => {
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    } = req.body;
-    
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, upperCoupon, originalAmount, discountPercentage, discountAmount, finalAmount } = req.body;
     const userId = req.user.id;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ success: false, message: 'Missing payment details' });
-    }
-
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-      .update(body.toString())
+    const generated_signature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'dummy_secret')
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest('hex');
 
-    if (expectedSignature !== razorpay_signature) {
-      await User.findByIdAndUpdate(userId, { paymentStatus: 'Failed' });
+    if (generated_signature !== razorpay_signature) {
       return res.status(400).json({ success: false, message: 'Invalid payment signature' });
     }
 
     const user = await User.findById(userId);
-    
-    user.paymentStatus = 'Completed';
-    user.razorpayPaymentId = razorpay_payment_id;
-    user.pricingCompleted = true;
-    
-    const now = new Date();
-    user.subscriptionStart = now;
-    const subEnd = new Date(now.getTime());
-    subEnd.setMonth(subEnd.getMonth() + 1);
-    user.subscriptionEnd = subEnd;
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
 
-    await user.save();
+    if (user.paymentStatus !== 'Completed') {
+      user.paymentStatus = 'Completed';
+      user.pricingCompleted = true;
+      user.paymentProvider = 'Razorpay';
+      
+      const now = new Date();
+      user.subscriptionStart = now;
+      const subEnd = new Date(now.getTime());
+      subEnd.setMonth(subEnd.getMonth() + 1);
+      user.subscriptionEnd = subEnd;
+      
+      await user.save();
 
-    await Subscription.create({
-      userId,
-      activePlan: user.plan,
-      paymentStatus: 'paid',
-      subscriptionStatus: 'active',
-      purchasedAt: now,
-      expiryDate: subEnd,
-      paymentId: razorpay_payment_id,
-      orderId: razorpay_order_id,
-      currency: user.currency || 'USD',
-      finalAmountPaid: user.finalAmountPaid,
-      appliedCoupon: user.appliedCoupon
-    });
+      await Subscription.create({
+        userId: user._id,
+        activePlan: plan || user.plan,
+        paymentStatus: 'paid',
+        paymentProvider: 'Razorpay',
+        subscriptionStatus: 'active',
+        purchasedAt: now,
+        expiryDate: subEnd,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        currency: 'USD',
+        finalAmountPaid: finalAmount !== undefined ? finalAmount : user.finalAmountPaid,
+        appliedCoupon: upperCoupon || user.appliedCoupon
+      });
+      const { sendPaymentSuccessEmail } = require('../services/emailService');
+      sendPaymentSuccessEmail(user, {
+        planName: plan || user.plan,
+        amount: finalAmount !== undefined ? finalAmount : user.finalAmountPaid,
+        startDate: now,
+        expiryDate: subEnd,
+        transactionId: razorpay_payment_id
+      }).catch(err => console.error('[Payment] Email Error:', err));
 
-    res.json({ success: true, message: 'Payment verified and plan activated' });
-  } catch (error) {
-    console.error('Error in verifyPayment:', error);
+      console.log(`Razorpay Payment: User ${user.email} plan activated successfully.`);
+    }
+
+    return res.json({ success: true, message: 'Payment verified successfully' });
+  } catch (err) {
+    console.error('Error in verifyPayment:', err);
     res.status(500).json({ success: false, message: 'Server error verifying payment' });
   }
 };

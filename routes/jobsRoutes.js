@@ -14,6 +14,12 @@ router.get('/jobs/saved', protect, savedJobController.getSavedJobs);
 router.post('/jobs/save', protect, savedJobController.saveJob);
 router.delete('/jobs/save/:jobId', protect, savedJobController.unsaveJob);
 
+// Liked Jobs
+const likedJobController = require('../controllers/likedJobController');
+router.get('/jobs/liked', protect, likedJobController.getLikedJobs);
+router.post('/jobs/like', protect, likedJobController.likeJob);
+router.delete('/jobs/like/:jobId', protect, likedJobController.unlikeJob);
+
 router.get('/jobs/:id', optionalAuth, jobsController.getJobById);
 
 // Applications

@@ -21,6 +21,18 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
   },
+  provider: {
+    type: String,
+    default: 'local'
+  },
+  googleId: {
+    type: String,
+    default: null
+  },
+  avatar: {
+    type: String,
+    default: null
+  },
   password: { 
     type: String, 
     required: [true, 'Password is required'],
@@ -102,6 +114,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  paymentProvider: {
+    type: String,
+    enum: ['Razorpay', 'Stripe', 'Coupon'],
+    default: 'Razorpay'
+  },
+  stripeSessionId: {
+    type: String,
+    default: null
+  },
   originalAmount: {
     type: Number,
     default: null
@@ -121,6 +142,36 @@ const userSchema = new mongoose.Schema({
   currency: {
     type: String,
     default: 'USD'
+  },
+  emailPreferences: {
+    marketingEmails: { type: Boolean, default: true },
+    subscriptionEmails: { type: Boolean, default: true },
+    transactionalEmails: { type: Boolean, default: true }
+  },
+  subscription: {
+    planName: { type: String, default: 'Free' },
+    amount: { type: Number, default: 0 },
+    status: { type: String, default: 'inactive' },
+    startDate: { type: Date, default: null },
+    expiryDate: { type: Date, default: null },
+    autoRenew: { type: Boolean, default: false },
+    lastRenewedAt: { type: Date, default: null },
+    razorpayPaymentId: { type: String, default: null },
+    razorpayOrderId: { type: String, default: null },
+    razorpaySubscriptionId: { type: String, default: null }
+  },
+  emailHistory: [
+    {
+      emailType: String,
+      sentAt: { type: Date, default: Date.now },
+      status: String,
+      messageId: String
+    }
+  ],
+  verification: {
+    code: { type: String, default: null },
+    expiresAt: { type: Date, default: null },
+    verified: { type: Boolean, default: false }
   }
 }, { timestamps: true });
 

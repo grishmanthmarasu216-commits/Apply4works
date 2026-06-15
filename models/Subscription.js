@@ -48,6 +48,15 @@ const subscriptionSchema = new mongoose.Schema({
   appliedCoupon: {
     type: String,
     default: null
+  },
+  paymentProvider: {
+    type: String,
+    enum: ['Razorpay', 'Stripe', 'Coupon'],
+    default: 'Razorpay'
+  },
+  stripeSessionId: {
+    type: String,
+    default: null
   }
 }, { timestamps: true });
 
