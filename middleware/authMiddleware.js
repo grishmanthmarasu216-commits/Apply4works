@@ -20,9 +20,11 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      if (error.name === 'MongoServerSelectionError' || error.message.includes('Mongo')) {
-        console.error('Auth Middleware MongoDB Error:', error.message);
-        // Do not crash the entire request, just proceed as unauthenticated
+      if (error.name === 'MongoServerSelectionError' || error.message.includes('Mongo') || error.message.includes('ENOTFOUND')) {
+        // Suppress DNS/Network drop spam from auth middleware when client sends concurrent requests
+        if (!error.message.includes('ENOTFOUND')) {
+          console.error('Auth Middleware MongoDB Error:', error.message);
+        }
       } else {
         console.error('Auth Middleware Error:', error);
       }
@@ -58,7 +60,9 @@ const optionalAuth = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
       req.user = await User.findById(decoded.id).select('-password');
     } catch (error) {
-      console.error('Optional Auth Error:', error.message);
+      if (!error.message.includes('ENOTFOUND') && !error.message.includes('MongoServerSelectionError')) {
+        console.error('Optional Auth Error:', error.message);
+      }
     }
   }
   next();

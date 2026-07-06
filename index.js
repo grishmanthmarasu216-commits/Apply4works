@@ -1,4 +1,6 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -10,6 +12,10 @@ const userRoutes   = require('./routes/userRoutes');
 const resumeRoutes = require('./routes/resumeRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
+const webhookRoutes = require('./routes/webhookRoutes');
+const linkedinRoutes = require('./routes/linkedin.routes');
+const knowledgeRoutes = require('./routes/knowledgeRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,8 +47,6 @@ app.use(express.json());
 
 app.use('/uploads', require('express').static(require('path').join(__dirname, 'uploads')));
 
-const webhookRoutes = require('./routes/webhookRoutes');
-
 // Routes
 app.use('/api', jobRoutes);
 app.use('/api/auth', authRoutes);
@@ -51,6 +55,9 @@ app.use('/api/resume', resumeRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/linkedin', linkedinRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/blogs', blogRoutes);
 
 
 // Connect to DB and Start Server
@@ -62,9 +69,19 @@ connectDB().then(() => {
     const mongoose = require('mongoose');
     console.log(`Connected DB (index.js): ${mongoose.connection.name}`);
 
+    // LinkedIn Configuration Validation
+    if (!process.env.LINKEDIN_CLIENT_ID || !process.env.LINKEDIN_CLIENT_SECRET || !process.env.LINKEDIN_REDIRECT_URI) {
+      console.warn('⚠️  [Warning] LinkedIn OAuth configuration is missing (Client ID, Secret, or Redirect URI). Connection features will fail.');
+    } else {
+      console.log('✅ [LinkedIn] OAuth configuration verified');
+    }
     // Initialize Email Schedulers
     const { runEmailScheduler } = require('./scheduler/emailCron');
     runEmailScheduler();
+    
+    // Initialize LinkedIn Scheduler
+    const { runLinkedinScheduler } = require('./scheduler/linkedinCron');
+    runLinkedinScheduler();
     
     if (process.env.LINKEDIN_TASK_ID) {
       console.log('[Apify] LinkedIn Task Loaded');
@@ -79,7 +96,7 @@ connectDB().then(() => {
     // Non-blocking background sync
     setImmediate(async () => {
       try {
-        await initializeJobsCache();
+        initializeJobsCache().catch(err => console.error('Cache init failed:', err));
         console.log('[Jobs] Initial Sync Started');
         await fetchJobs();
         console.log('[Jobs] Initial Sync Complete');

@@ -3,11 +3,12 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 30000, // Increased from 5000 to prevent timeout on slow DNS
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 60000,
+      socketTimeoutMS: 60000,
+      connectTimeoutMS: 30000,
       maxPoolSize: 50,
       retryWrites: true,
-      // Removed 'family: 4' to prevent ENOTFOUND if IPv4 resolution drops but IPv6 works
+      family: 4
     });
     console.log('[MongoDB] Connected successfully');
     console.log(`[MongoDB] Cluster: ${conn.connection.host}, Database: ${conn.connection.name}`);

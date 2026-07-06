@@ -3,7 +3,22 @@ const multer   = require('multer');
 const path     = require('path');
 const fs       = require('fs');
 const { protect } = require('../middleware/authMiddleware');
-const { uploadResume, getMyResume, enhanceUserResume } = require('../controllers/resumeController');
+const {
+  uploadResume,
+  getMyResume,
+  saveResume,
+  editUserResume,
+  analyzeJob,
+  optimizeResume,
+  optimizeSection,
+  aiSuggest,
+  generateCoverLetterHandler,
+  restoreVersion,
+  listVersions,
+  deleteVersion,
+  saveVersion,
+  testParse,
+} = require('../controllers/resumeController');
 
 const router = express.Router();
 
@@ -21,20 +36,41 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB guard
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = /\.(pdf|doc|docx)$/i;
     if (allowed.test(path.extname(file.originalname))) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF, DOC and DOCX files are allowed.'));
+      cb(new Error('Only PDF, DOC, and DOCX files are allowed.'));
     }
   },
 });
 
 // ── Routes ─────────────────────────────────────────────────────────────────────
-router.post('/upload', protect, upload.single('resume'), uploadResume);
-router.get('/me',      protect, getMyResume);
-router.post('/enhance', protect, enhanceUserResume);
+
+// Core resume CRUD
+router.post('/upload',         protect, upload.single('resume'), uploadResume);
+router.get('/me',              protect, getMyResume);
+router.put('/save',            protect, saveResume);           // V2 autosave
+router.put('/edit',            protect, editUserResume);       // Legacy compat
+
+// Job analysis
+router.post('/analyze-job',    protect, analyzeJob);
+
+// AI optimization
+router.post('/optimize',               protect, optimizeResume);
+router.post('/optimize-section',       protect, optimizeSection);
+router.post('/ai-suggest',             protect, aiSuggest);
+router.post('/generate-cover-letter',  protect, generateCoverLetterHandler);
+
+// Version control
+router.post('/restore-version', protect, restoreVersion);
+router.post('/versions/save',   protect, saveVersion);     // Explicit named version save
+router.get('/versions',         protect, listVersions);
+router.delete('/versions/:id',  protect, deleteVersion);
+
+// Dev diagnostics (disabled in production inside controller)
+router.post('/test-parse', protect, testParse);
 
 module.exports = router;

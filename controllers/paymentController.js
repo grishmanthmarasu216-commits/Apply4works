@@ -74,6 +74,7 @@ exports.createOrder = async (req, res) => {
       try {
         await User.findByIdAndUpdate(userId, {
           plan,
+          planType: (plan === 'Pro' || plan === 'Pro Plus') ? 'PRO' : 'BASIC',
           paymentStatus: 'Completed',
           paymentProvider: 'Coupon',
           pricingCompleted: true,
@@ -151,6 +152,7 @@ exports.createOrder = async (req, res) => {
     try {
       await User.findByIdAndUpdate(userId, {
         plan,
+        planType: (plan === 'Pro' || plan === 'Pro Plus') ? 'PRO' : 'BASIC',
         paymentStatus: 'Pending',
         paymentProvider: 'Razorpay',
         appliedCoupon: upperCoupon,
@@ -200,6 +202,8 @@ exports.verifyPayment = async (req, res) => {
       user.paymentStatus = 'Completed';
       user.pricingCompleted = true;
       user.paymentProvider = 'Razorpay';
+      user.plan = plan || user.plan || 'Pro';
+      user.planType = (user.plan === 'Pro' || user.plan === 'Pro Plus') ? 'PRO' : 'BASIC';
       
       const now = new Date();
       user.subscriptionStart = now;

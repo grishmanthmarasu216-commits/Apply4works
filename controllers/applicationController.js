@@ -15,7 +15,7 @@ exports.createApplication = async (req, res) => {
         app = new Application({
             userId: req.user._id,
             jobId,
-            status: 'PENDING_SUBMISSION',
+            status: req.body.status || 'PENDING_SUBMISSION',
             source: req.body.source || req.body.appliedBy || 'Manual',
             matchScore: req.body.matchScore || 0
         });

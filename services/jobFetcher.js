@@ -7,6 +7,10 @@ const DEBUG_MODE = process.env.DEBUG_MODE === "true";
 let isSyncRunning = false;
 
 const fetchJobs = async () => {
+    // ── Apify fetching enabled ──────────────────────────────────────────────────
+    // Apify job fetching runs automatically based on the schedule.
+    // ──────────────────────────────────────────────────────────────────────────
+
     if (isSyncRunning) {
         console.log('[Apify] Sync already running. Skipping duplicate trigger.');
         return;

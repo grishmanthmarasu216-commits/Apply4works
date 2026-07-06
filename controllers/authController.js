@@ -48,23 +48,20 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
-      // Send Welcome Email asynchronously
-      sendWelcomeEmail(user).catch(err => console.error('[Auth] Welcome email error:', err));
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.verification = {
+        code: await bcrypt.hash(otp, 10),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        verified: false
+      };
+      await user.save();
+      await sendVerificationCodeEmail(user, otp);
 
-      res.status(201).json({
-        success: true,
-        token: generateToken(user._id),
-        user: {
-          _id: user._id,
-          name: user.name,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          pricingCompleted: user.pricingCompleted,
-          onboardingCompleted: user.onboardingCompleted,
-          plan: user.plan,
-          paymentStatus: user.paymentStatus
-        }
+      return res.status(403).json({ 
+        success: false, 
+        requireOTP: true, 
+        email: user.email, 
+        message: 'OTP sent to your email.' 
       });
     } else {
       res.status(400).json({ success: false, message: 'Invalid user data' });
@@ -86,6 +83,17 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email }).populate('preferences');
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      // Always require OTP for manual login (2FA style)
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.verification = {
+        code: await bcrypt.hash(otp, 10),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        verified: user.verification?.verified || false
+      };
+      await user.save();
+      await sendVerificationCodeEmail(user, otp);
+      return res.status(403).json({ success: false, requireOTP: true, email: user.email, message: 'OTP verification required to log in.' });
+
       res.json({
         success: true,
         token: generateToken(user._id),
@@ -268,12 +276,17 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid OTP.' });
     }
     
-    // OTP matches, mark verified
+    // OTP matches, check if it's their first time verifying
+    const isFirstTimeVerification = !user.verification || !user.verification.verified;
+    
+    // Mark verified
     user.verification.verified = true;
     user.verification.code = null;
     await user.save();
 
-    sendWelcomeEmail(user).catch(err => console.error('[Auth] Welcome email error:', err));
+    if (isFirstTimeVerification) {
+      sendWelcomeEmail(user).catch(err => console.error('[Auth] Welcome email error:', err));
+    }
     
     res.json({
       success: true,

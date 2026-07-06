@@ -2,7 +2,7 @@ const { queueEmail } = require('./emailQueue');
 const fs = require('fs');
 const path = require('path');
 
-const getBaseUrl = () => process.env.VITE_APP_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
+const getBaseUrl = () => process.env.VITE_APP_URL || process.env.FRONTEND_URL || 'https://apply4works.com';
 
 const renderTemplate = (templateName, variables) => {
   const filePath = path.join(__dirname, '..', 'templates', 'emails', `${templateName}.html`);
@@ -19,7 +19,8 @@ exports.sendWelcomeEmail = async (user) => {
   const subject = `Welcome to Apply4Works 🚀`;
   const html = renderTemplate('welcomeEmail', {
     firstName: user.firstName || user.name || 'User',
-    ctaUrl: `${getBaseUrl()}/dashboard`
+    dashboardUrl: `${getBaseUrl()}/dashboard`,
+    upgradeUrl: `${getBaseUrl()}/pricing`
   });
   return queueEmail({ userId: user._id, emailType: 'Welcome', to: user.email, subject, html });
 };
