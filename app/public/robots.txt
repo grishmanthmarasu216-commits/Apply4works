@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /jobs
+Disallow: /jobs/*
+Disallow: /resume
+Disallow: /applications
+
+Sitemap: https://jobright.ai/sitemap.xml

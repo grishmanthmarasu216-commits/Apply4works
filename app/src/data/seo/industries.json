@@ -1,0 +1,18 @@
+[
+  {
+    "industrySlug": "software-engineers",
+    "title": "AI Resume Builder for Software Engineers",
+    "heroSubtitle": "Land more technical interviews. Let our AI tailor your resume to perfectly match software engineering job descriptions in seconds.",
+    "painPoints": [
+      "Getting rejected by automated ATS filters before a technical recruiter sees your code.",
+      "Struggling to balance soft skills with technical acronyms.",
+      "Rewriting your resume for front-end, back-end, and full-stack roles manually."
+    ],
+    "howApply4WorksHelps": [
+      "Deterministic matching against the exact tech stack required by the job.",
+      "Generates quantified bullet points demonstrating your technical impact.",
+      "Ensures modern ATS algorithms correctly parse your GitHub and portfolio links."
+    ],
+    "seoContent": "## Why Software Engineers Need an ATS Resume Builder\n\nIn the tech industry, applicant tracking systems are programmed to look for very specific languages, frameworks, and methodologies. A single missing keyword like 'React.js' instead of 'React' can get your resume instantly archived. Apply4Works solves this by analyzing the exact JD and injecting the precise technical terminology required."
+  }
+]

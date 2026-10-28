@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Sarah J.",
+    "role": "Product Manager",
+    "beforeScore": 38,
+    "afterScore": 95,
+    "story": "I was applying to over 100 PM roles and getting instant rejections. Apply4Works analyzed my resume and realized my ATS keywords were totally misaligned. It rewrote my experience to highlight Agile, Roadmapping, and Cross-functional Leadership. Within 2 weeks, I landed 4 interviews and accepted an offer at a Series B startup."
+  },
+  {
+    "name": "Michael T.",
+    "role": "Software Engineer",
+    "beforeScore": 55,
+    "afterScore": 98,
+    "story": "As a developer, I hated writing resumes. Apply4Works automatically parsed the job description for a Senior Engineer role at a FAANG company and injected the exact cloud infrastructure keywords they were scanning for. It pre-filled my application and I got a call back the next day."
+  }
+]

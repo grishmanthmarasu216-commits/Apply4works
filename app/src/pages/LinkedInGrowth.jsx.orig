@@ -1,0 +1,362 @@
+Created At: 2026-06-23T18:24:15Z
+Completed At: 2026-06-23T18:24:15Z
+File Path: `file:///c:/Users/HP/Pictures/a4w/nanzip/app/src/pages/LinkedInGrowth.jsx`
+Total Lines: 354
+Total Bytes: 25312
+Showing lines 1 to 354
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: import React, { useState } from 'react';
+2: import Sidebar from '../components/Sidebar';
+3: import { useApp } from '../context/AppContext';
+4: 
+5: export default function LinkedInGrowth() {
+6:   const { toast } = useApp();
+7: 
+8:   // State
+9:   const [activeTab, setActiveTab] = useState('topic');
+10:   const [topic, setTopic] = useState('');
+11:   const [writingStyle, setWritingStyle] = useState('Professional');
+12:   const [category, setCategory] = useState('Project Showcase');
+13:   
+14:   const [isGenerating, setIsGenerating] = useState(false);
+15:   const [generatedContent, setGeneratedContent] = useState(null);
+16:   
+17:   const [selectedPost, setSelectedPost] = useState(null);
+18:   const [editorContent, setEditorContent] = useState('');
+19:   const [isPublishing, setIsPublishing] = useState(false);
+20: 
+21:   // Constants
+22:   const WRITING_STYLES = ['Professional', 'Storytelling', 'Thought Leadership', 'Technical Expert', 'Recruiter Friendly', 'Career Growth'];
+23:   const CATEGORIES = ['Project Showcase', 'Learning Journey', 'Achievement', 'Industry Insight', 'Job Search Update', 'Personal Branding'];
+24:   const PROMPT_EXAMPLES = [
+25:     'Completed a new project',
+26:     'Earned a certification',
+27:     'Learned a new technology',
+28:     'Career milestone',
+29:     'Industry insight'
+30:   ];
+31: 
+32:   // Actions
+33:   const handleGenerate = () => {
+34:     if (!topic.trim()) return toast('Please enter a topic first.', 'error');
+35:     
+36:     setIsGenerating(true);
+37:     setGeneratedContent(null);
+38:     setSelectedPost(null);
+39:     
+40:     // Simulate AI generation time
+41:     setTimeout(() => {
+42:       setIsGenerating(false);
+43:       setGeneratedContent([
+44:         {
+45:           id: 1,
+46:           type: 'Professional',
+47:           text: `I am excited to share a recent update regarding: ${topic}.\n\nThroughout this process, I focused on implementing scalable solutions and driving measurable results. By applying modern best practices, we were able to significantly optimize performance and deliver value.\n\nI’m looking forward to taking these learnings into my next challenge. #ProfessionalGrowth #TechLeadership #Innovation`
+48:         },
+49:         {
+50:           id: 2,
+51:           type: 'Storytelling',
+52:           text: `When I first started looking into ${topic}, I had no idea how challenging—and rewarding—the journey would be.\n\nThere were moments when the solution seemed out of reach, but step by step, by breaking down the complex problems and collaborating effectively, everything finally clicked into place. \n\nEvery obstacle is just an opportunity to learn something new. What's the biggest challenge you've overcome recently? Let me know below! 👇 #DeveloperJourney #Perseverance`
+53:         },
+54:         {
+55:           id: 3,
+56:           type: 'Thought Leadership',
+57:           text: `The landscape is evolving rapidly, and ${topic} is becoming a critical differentiator.\n\nHere are 3 key takeaways from my recent deep-dive into this space:\n\n1️⃣ Adaptability is your strongest asset in a shifting market.\n2️⃣ Clean architecture early on saves hundreds of hours later.\n3️⃣ Never underestimate the power of consistent, incremental progress.\n\nHow is your team adapting to these changes? Let’s discuss in the comments. #FutureOfTech #ThoughtLeadership`
+58:         }
+59:       ]);
+60:     }, 2800);
+61:   };
+62: 
+63:   const handleSelectPost = (post) => {
+64:     setSelectedPost(post.id);
+65:     setEditorContent(post.text);
+66:   };
+67: 
+68:   const handlePublish = () => {
+69:     setIsPublishing(true);
+70:     setTimeout(() => {
+71:       setIsPublishing(false);
+72:       toast('Post published successfully to LinkedIn!', 'success');
+73:     }, 1500);
+74:   };
+75: 
+76:   return (
+77:     <div className="flex bg-[#f4f7f9] min-h-screen font-sans text-slate-800">
+78:       <Sidebar />
+79:       <div className="flex-1 flex flex-col min-w-0" style={{ marginLeft: 240, width: 'calc(100% - 240px)' }}>
+80:         
+81:         {/* TOP ACTION BAR (Sticky) */}
+82:         <div className="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
+83:           <div className="flex items-center gap-3">
+84:              <div className="w-8 h-8 rounded-lg bg-[#0a66c2] flex items-center justify-center text-white font-bold text-sm shadow-md">in</div>
+85:              <h1 className="font-bold text-xl text-[#0B1E36] hidden md:block">Growth Studio</h1>
+86:           </div>
+87:           <div className="flex items-center gap-3">
+88:             <button className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors hidden md:block">Connect LinkedIn</button>
+89:             <div className="w-px h-5 bg-slate-300 hidden md:block"></div>
+90:             <button className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors hidden sm:block">Save Draft</button>
+91:             <button className="px-4 py-2 text-sm font-semibold text-[#0B1E36] bg-[#D4AF37]/20 hover:bg-[#D4AF37]/30 border border-[#D4AF37]/50 rounded-lg transition-all hidden sm:block">Schedule</button>
+92:             <button 
+93:               onClick={handlePublish}
+94:               disabled={!selectedPost || isPublishing}
+95:               className={`px-5 py-2 text-sm font-bold text-white rounded-lg transition-all shadow-md ${(!selectedPost || isPublishing) ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#0B1E36] hover:bg-[#0f2a4a] hover:shadow-lg'}`}
+96:             >
+97:               {isPublishing ? 'Publishing...' : 'Publish Now'}
+98:             </button>
+99:           </div>
+100:         </div>
+101: 
+102:         {/* 3-COLUMN LAYOUT */}
+103:         <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
+104:           
+105:           {/* LEFT SIDEBAR (Input Controls) */}
+106:           <div className="xl:w-[340px] w-full bg-white border-r border-slate-200 flex flex-col overflow-y-auto custom-scrollbar shrink-0">
+107:             <div className="p-6">
+108:               <h2 className="text-lg font-extrabold text-[#0B1E36] mb-1">Create With AI</h2>
+109:               <p className="text-sm text-slate-500 mb-6">Generate highly engaging LinkedIn content in seconds.</p>
+110: 
+111:               {/* Tabs */}
+112:               <div className="flex bg-slate-100 p-1 rounded-lg mb-6">
+113:                 <button className={`flex-1 text-sm font-semibold py-1.5 rounded-md transition-all ${activeTab === 'topic' ? 'bg-white text-[#0B1E36] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setActiveTab('topic')}>Topic</button>
+114:                 <button className={`flex-1 text-sm font-semibold py-1.5 rounded-md transition-all ${activeTab === 'url' ? 'bg-white text-[#0B1E36] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setActiveTab('url')}>URL</button>
+115:                 <button className={`flex-1 text-sm font-semibold py-1.5 rounded-md transition-all ${activeTab === 'resume' ? 'bg-white text-[#0B1E36] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`} onClick={() => setActiveTab('resume')}>Resume</button>
+116:               </div>
+117: 
+118:               {/* Input Area */}
+119:               <div className="mb-6">
+120:                 <label className="block text-sm font-bold text-slate-700 mb-2">What would you like to post about?</label>
+121:                 <textarea 
+122:                   className="w-full border border-slate-300 rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#0B1E36] focus:border-[#0B1E36] outline-none resize-none transition-all"
+123:                   rows="4"
+124:                   placeholder="e.g. I just deployed my first full-stack application using React and Node.js..."
+125:                   value={topic}
+126:                   onChange={(e) => setTopic(e.target.value)}
+127:                 ></textarea>
+128:                 <div className="mt-3 flex flex-wrap gap-2">
+129:                   {PROMPT_EXAMPLES.map((ex, i) => (
+130:                     <span key={i} onClick={() => setTopic(ex)} className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full cursor-pointer hover:bg-slate-200 transition-colors border border-slate-200">{ex}</span>
+131:                   ))}
+132:                 </div>
+133:               </div>
+134: 
+135:               {/* Settings */}
+136:               <div className="mb-5">
+137:                 <label className="block text-sm font-bold text-slate-700 mb-2">Writing Style</label>
+138:                 <select className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0B1E36] appearance-none bg-white" value={writingStyle} onChange={(e) => setWritingStyle(e.target.value)}>
+139:                   {WRITING_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+140:                 </select>
+141:               </div>
+142: 
+143:               <div className="mb-8">
+144:                 <label className="block text-sm font-bold text-slate-700 mb-2">Post Category</label>
+145:                 <select className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0B1E36] appearance-none bg-white" value={category} onChange={(e) => setCategory(e.target.value)}>
+146:                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+147:                 </select>
+148:               </div>
+149: 
+150:               {/* Generate CTA */}
+151:               <button 
+152:                 onClick={handleGenerate}
+153:                 disabled={isGenerating || !topic.trim()}
+154:                 className={`w-full py-3.5 rounded-xl font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 ${isGenerating || !topic.trim() ? 'bg-[#0B1E36]/60 cursor-not-allowed' : 'bg-[#0B1E36] hover:bg-[#0f2a4a] hover:-translate-y-0.5 hover:shadow-lg'}`}
+155:               >
+156:                 {isGenerating ? (
+157:                   <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+158:                 ) : (
+159:                   <>
+160:                     <svg className="w-5 h-5 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+161:                     Generate Magic
+162:                   </>
+163:                 )}
+164:               </button>
+165:             </div>
+166:           </div>
+167: 
+168:           {/* CENTER WORKSPACE (Generated Content / Editor) */}
+169:           <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-6 md:p-8 relative min-h-[500px]">
+170:             
+171:             {/* State 1: Empty */}
+172:             {!isGenerating && !generatedContent && !selectedPost && (
+173:               <div className="flex-1 flex flex-col items-center justify-center text-center max-w-lg mx-auto opacity-80 animate-in fade-in duration-500">
+174:                 <div className="w-20 h-20 bg-gradient-to-br from-[#0B1E36] to-[#1e4a80] rounded-3xl shadow-xl flex items-center justify-center mb-6 transform rotate-3">
+175:                   <svg className="w-10 h-10 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+176:                 </div>
+177:                 <h2 className="text-2xl font-extrabold text-[#0B1E36] mb-3">LinkedIn Growth Studio</h2>
+178:                 <p className="text-slate-500 mb-8 leading-relaxed">Enter a topic on the left and let our AI generate highly optimized, engaging LinkedIn content tailored to your unique voice.</p>
+179:               </div>
+180:             )}
+181: 
+182:             {/* State 2: Generating Skeleton */}
+183:             {isGenerating && (
+184:               <div className="max-w-3xl mx-auto w-full animate-in fade-in duration-300">
+185:                 <h3 className="font-bold text-lg text-slate-800 mb-6 flex items-center gap-3">
+186:                   <svg className="animate-spin h-5 w-5 text-[#0B1E36]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+187:                   Drafting brilliant content...
+188:                 </h3>
+189:                 <div className="flex flex-col gap-6">
+190:                   {[1, 2, 3].map(i => (
+191:                     <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col gap-4 animate-pulse">
+192:                       <div className="h-5 bg-slate-200 rounded w-1/4"></div>
+193:                       <div className="h-4 bg-slate-100 rounded w-full mt-2"></div>
+194:                       <div className="h-4 bg-slate-100 rounded w-full"></div>
+195:                       <div className="h-4 bg-slate-100 rounded w-5/6"></div>
+196:                     </div>
+197:                   ))}
+198:                 </div>
+199:               </div>
+200:             )}
+201: 
+202:             {/* State 3: Generated Cards */}
+203:             {!isGenerating && generatedContent && !selectedPost && (
+204:               <div className="max-w-3xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+205:                 <h3 className="font-bold text-2xl text-[#0B1E36] mb-2">Select Your Post</h3>
+206:                 <p className="text-slate-500 mb-8">We generated 3 variations. Choose the one that best fits your brand.</p>
+207:                 <div className="flex flex-col gap-6 pb-10">
+208:                   {generatedContent.map((post) => (
+209:                     <div key={post.id} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-[#D4AF37]/50 hover:shadow-md transition-all group relative">
+210:                       <div className="flex items-center justify-between mb-4">
+211:                         <span className="px-3 py-1 bg-slate-100 text-[#0B1E36] font-bold text-xs rounded-full">{post.type} Version</span>
+212:                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+213:                            <button className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors" title="Copy"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
+214:                            <button className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors" title="Regenerate"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></button>
+215:                         </div>
+216:                       </div>
+217:                       <p className="text-slate-700 leading-relaxed whitespace-pre-wrap text-[15px] mb-6">{post.text}</p>
+218:                       <button onClick={() => handleSelectPost(post)} className="w-full py-2.5 rounded-lg border-2 border-[#0B1E36] text-[#0B1E36] font-bold hover:bg-[#0B1E36] hover:text-white transition-all">Select & Edit</button>
+219:                     </div>
+220:                   ))}
+221:                 </div>
+222:               </div>
+223:             )}
+224: 
+225:             {/* State 4: Editor */}
+226:             {!isGenerating && selectedPost && (
+227:               <div className="max-w-3xl mx-auto w-full h-full flex flex-col animate-in fade-in duration-300">
+228:                 <div className="flex items-center justify-between mb-6">
+229:                   <div>
+230:                     <button onClick={() => setSelectedPost(null)} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 font-semibold mb-2 transition-colors">
+231:                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back to Variations
+232:                     </button>
+233:                     <h3 className="font-bold text-2xl text-[#0B1E36]">Review & Edit</h3>
+234:                   </div>
+235:                   <div className="flex items-center gap-4 text-sm text-slate-500 font-semibold">
+236:                     <span>{editorContent.length} chars</span>
+237:                     <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+238:                     <span>{editorContent.split(/\s+/).filter(Boolean).length} words</span>
+239:                   </div>
+240:                 </div>
+241:                 
+242:                 <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[300px]">
+243:                   <div className="bg-slate-50 border-b border-slate-100 p-3 flex gap-2">
+244:                      {/* Fake rich text toolbar */}
+245:                      {['B', 'I', 'U'].map(btn => (
+246:                        <button key={btn} className="w-8 h-8 flex items-center justify-center font-bold font-serif text-slate-600 hover:bg-slate-200 rounded">{btn}</button>
+247:                      ))}
+248:                      <div className="w-px h-6 bg-slate-300 my-auto mx-1"></div>
+249:                      <button className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-slate-200 rounded"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg></button>
+250:                   </div>
+251:                   <textarea 
+252:                     className="flex-1 w-full p-6 text-slate-800 leading-relaxed text-lg outline-none resize-none custom-scrollbar"
+253:                     value={editorContent}
+254:                     onChange={(e) => setEditorContent(e.target.value)}
+255:                   ></textarea>
+256:                 </div>
+257:               </div>
+258:             )}
+259: 
+260:           </div>
+261: 
+262:           {/* RIGHT SIDEBAR (Preview & Management) */}
+263:           <div className="xl:w-[380px] w-full bg-white border-l border-slate-200 shrink-0 overflow-y-auto custom-scrollbar flex flex-col hidden lg:flex">
+264:             
+265:             {/* LinkedIn Preview Block */}
+266:             <div className="p-6 bg-slate-50 border-b border-slate-200">
+267:                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Live Preview</h3>
+268:                
+269:                <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden relative">
+270:                  {/* Top stripe */}
+271:                  <div className="h-1 bg-[#0a66c2]"></div>
+272:                  
+273:                  <div className="p-4">
+274:                    <div className="flex items-start gap-3 mb-3">
+275:                      <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0 flex items-center justify-center text-slate-400 font-bold overflow-hidden">
+276:                        <svg className="w-8 h-8 mt-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+277:                      </div>
+278:                      <div>
+279:                        <h4 className="font-bold text-slate-900 text-[14px] leading-tight hover:text-[#0a66c2] hover:underline cursor-pointer">Alex Developer</h4>
+280:                        <p className="text-xs text-slate-500 line-clamp-1">Software Engineer | Building SaaS Products</p>
+281:                        <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">Just now • <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd" /></svg></p>
+282:                      </div>
+283:                    </div>
+284:                    
+285:                    <div className="text-[13px] text-slate-800 whitespace-pre-wrap leading-snug font-sans">
+286:                      {editorContent || (generatedContent ? "Select a post to preview it here." : "Your generated content will appear here exactly as it would look on LinkedIn.")}
+287:                    </div>
+288:                  </div>
+289: 
+290:                  {/* Fake Engagement Bar */}
+291:                  <div className="px-4 py-2 border-t border-slate-100 flex items-center justify-between">
+292:                    <div className="flex items-center gap-1 text-slate-500">
+293:                      <div className="flex -space-x-1">
+294:                        <div className="w-4 h-4 bg-blue-500 rounded-full border border-white flex items-center justify-center shadow-sm"><svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" /></svg></div>
+295:                        <div className="w-4 h-4 bg-red-500 rounded-full border border-white flex items-center justify-center shadow-sm"><svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg></div>
+296:                      </div>
+297:                      <span className="text-[11px] ml-1 hover:text-blue-600 hover:underline cursor-pointer">42</span>
+298:                    </div>
+299:                    <div className="text-[11px] text-slate-500 hover:text-blue-600 hover:underline cursor-pointer">
+300:                      12 comments • 3 reposts
+301:                    </div>
+302:                  </div>
+303: 
+304:                  {/* Fake Action Bar */}
+305:                  <div className="px-2 py-1.5 border-t border-slate-100 flex items-center justify-around">
+306:                    {['Like', 'Comment', 'Repost', 'Send'].map(action => (
+307:                      <button key={action} className="flex flex-col md:flex-row items-center gap-1.5 px-3 py-2 rounded-md hover:bg-slate-100 text-slate-500 font-semibold text-[11px] transition-colors">
+308:                        <div className="w-3.5 h-3.5 bg-slate-300 rounded-sm"></div>
+309:                        <span className="hidden sm:inline">{action}</span>
+310:                      </button>
+311:                    ))}
+312:                  </div>
+313:                </div>
+314:             </div>
+315: 
+316:             {/* Widgets */}
+317:             <div className="p-6 flex-1 flex flex-col gap-6">
+318:               
+319:               {/* Content Tips */}
+320:               <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-xl p-4 relative overflow-hidden">
+321:                 <div className="absolute top-0 right-0 p-2 opacity-20">
+322:                   <svg className="w-12 h-12 text-[#D4AF37]" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" /></svg>
+323:                 </div>
+324:                 <h4 className="font-bold text-[#0B1E36] text-sm mb-2 flex items-center gap-2">
+325:                   <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+326:                   Pro Tip
+327:                 </h4>
+328:                 <p className="text-xs text-slate-700 leading-relaxed">Posts between 150–300 words generally perform best on LinkedIn. Use the <strong>Storytelling</strong> style for personal journeys, and <strong>Professional</strong> for project releases.</p>
+329:               </div>
+330: 
+331:               {/* Recent Drafts */}
+332:               <div>
+333:                 <h3 className="text-sm font-bold text-slate-800 mb-3">Recent Drafts</h3>
+334:                 <div className="flex flex-col gap-2">
+335:                   <div className="p-3 border border-slate-200 rounded-lg hover:border-[#0B1E36] cursor-pointer transition-colors bg-white shadow-sm flex flex-col gap-1">
+336:                     <span className="text-xs font-bold text-[#0B1E36]">Launched MVP</span>
+337:                     <span className="text-xs text-slate-400">Saved 2 hours ago</span>
+338:                   </div>
+339:                   <div className="p-3 border border-slate-200 rounded-lg hover:border-[#0B1E36] cursor-pointer transition-colors bg-white shadow-sm flex flex-col gap-1">
+340:                     <span className="text-xs font-bold text-[#0B1E36]">React Query Deep Dive</span>
+341:                     <span className="text-xs text-slate-400">Saved yesterday</span>
+342:                   </div>
+343:                 </div>
+344:               </div>
+345: 
+346:             </div>
+347:           </div>
+348: 
+349:         </div>
+350:       </div>
+351:     </div>
+352:   );
+353: }
+354: 
+The above content shows the entire, complete file contents of the requested file.

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="applyGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb" /> <!-- Tailwind Blue 600 -->
+      <stop offset="100%" stop-color="#3b82f6" /> <!-- Tailwind Blue 500 -->
+    </linearGradient>
+    <linearGradient id="sparkGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#60a5fa" /> <!-- Tailwind Blue 400 -->
+      <stop offset="100%" stop-color="#93c5fd" /> <!-- Tailwind Blue 300 -->
+    </linearGradient>
+  </defs>
+  <!-- Background Shield/Briefcase shape -->
+  <rect x="15" y="25" width="70" height="60" rx="16" fill="url(#applyGradient)" />
+  <!-- Briefcase Handle -->
+  <path d="M 35 25 L 35 15 C 35 10, 40 5, 50 5 C 60 5, 65 10, 65 15 L 65 25" fill="none" stroke="url(#applyGradient)" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- Upward Growth Arrow -->
+  <path d="M 35 65 L 50 50 L 65 65" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M 50 70 L 50 50" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- AI Spark -->
+  <path d="M 70 30 Q 75 20 85 15 Q 75 15 70 5 Q 65 15 55 15 Q 65 20 70 30 Z" fill="url(#sparkGradient)" />
+</svg>
