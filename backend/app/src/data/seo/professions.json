@@ -1,0 +1,26 @@
+[
+  {
+    "profession": "Software Engineer",
+    "slug": "software-engineer",
+    "description": "Software Engineers design, develop, and maintain complex software systems. To beat the ATS, a software engineer resume must precisely balance technical skills with demonstrable business impact.",
+    "topKeywords": ["JavaScript", "React", "Node.js", "Python", "Agile", "System Design", "AWS", "CI/CD"],
+    "atsRecommendations": [
+      "Include a dedicated Technical Skills section grouped by languages, frameworks, and tools.",
+      "Quantify your impact (e.g., 'Reduced latency by 40%').",
+      "Spell out acronyms at least once (e.g., 'Amazon Web Services (AWS)')."
+    ],
+    "skillsToHighlight": ["Full-Stack Development", "Cloud Architecture", "API Design"]
+  },
+  {
+    "profession": "Data Analyst",
+    "slug": "data-analyst",
+    "description": "Data Analysts turn raw data into actionable business intelligence. An ATS-optimized data analyst resume must showcase proficiency in SQL, data visualization, and statistical analysis.",
+    "topKeywords": ["SQL", "Python", "Tableau", "Power BI", "Data Visualization", "ETL", "A/B Testing", "Excel"],
+    "atsRecommendations": [
+      "Explicitly mention the BI tools you used in each role.",
+      "Focus on the business outcomes of your analyses (e.g., 'Increased revenue by 15%').",
+      "Include statistical methods as keywords if mentioned in the job description."
+    ],
+    "skillsToHighlight": ["Data Storytelling", "Statistical Modeling", "Dashboard Creation"]
+  }
+]
