@@ -1,0 +1,22 @@
+[
+  {
+    "category": "ATS",
+    "question": "What is an ATS (Applicant Tracking System)?",
+    "answer": "An ATS is software used by employers to manage the recruitment process. It scans resumes for keywords, parses data, and filters candidates before a human recruiter ever sees them."
+  },
+  {
+    "category": "ATS",
+    "question": "How do I beat the ATS?",
+    "answer": "To beat the ATS, you must use standard formatting, avoid graphics/tables, and include exact keyword matches from the job description in your resume."
+  },
+  {
+    "category": "Resume Building",
+    "question": "Should my resume be one page?",
+    "answer": "For most candidates with less than 10 years of experience, a one-page resume is highly recommended. If you have extensive senior experience, two pages is acceptable."
+  },
+  {
+    "category": "Job Search",
+    "question": "How many jobs should I apply to?",
+    "answer": "Quality beats quantity. Applying to 5 highly-tailored jobs per day yields better results than spamming 50 generic applications."
+  }
+]

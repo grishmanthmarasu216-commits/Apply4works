@@ -1,0 +1,30 @@
+{
+  "Description": "Import and use GlobalLogo in Landing.jsx",
+  "Instruction": "Replace legacy logos with GlobalLogo in WelcomeModal and Landing Navbar",
+  "ReplacementChunks": [
+    {
+      "AllowMultiple": false,
+      "EndLine": 6,
+      "ReplacementContent": "import { useApp } from '../context/AppContext'\nimport { jobs as allJobs } from '../data/jobs'\nimport LogoutButton from '../components/LogoutButton'\nimport GlobalLogo from '../components/GlobalLogo'",
+      "StartLine": 4,
+      "TargetContent": "import { useApp } from '../context/AppContext'\nimport { jobs as allJobs } from '../data/jobs'\nimport LogoutButton from '../components/LogoutButton'"
+    },
+    {
+      "AllowMultiple": false,
+      "EndLine": 68,
+      "ReplacementContent": "          <div>\n            <div className=\"flex items-center gap-2 mb-1\">\n              <GlobalLogo size=\"sm\" />\n            </div>",
+      "StartLine": 61,
+      "TargetContent": "          <div>\n            <div className=\"flex items-center gap-2 mb-1\">\n              <div className=\"w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs\"\n                style={{ background: 'var(--primary)' }}>A</div>\n              <span className=\"font-extrabold text-base\" style={{ color: 'var(--text-h)' }}>\n                Apply4<span style={{ color: 'var(--primary)' }}>works</span>\n              </span>\n            </div>"
+    },
+    {
+      "AllowMultiple": false,
+      "EndLine": 228,
+      "ReplacementContent": "        <div className=\"flex items-center gap-2.5\">\n          <GlobalLogo size=\"lg\" />\n        </div>",
+      "StartLine": 222,
+      "TargetContent": "        <div className=\"flex items-center gap-2.5\">\n          <div className=\"w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm\"\n            style={{ background: 'var(--primary)' }}>A</div>\n          <span className=\"font-bold text-base\" style={{ color: 'var(--text-h)' }}>\n            Apply4<span style={{ color: 'var(--primary)' }}>works</span>\n          </span>\n        </div>"
+    }
+  ],
+  "TargetFile": "c:\\Users\\HP\\Pictures\\Z\\nanzip\\app\\src\\pages\\Landing.jsx",
+  "toolAction": "Updating Landing.jsx",
+  "toolSummary": "Update Landing logo"
+}
